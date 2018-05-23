@@ -1,4 +1,5 @@
 # SGIP 1.2
+[![Build Status](https://travis-ci.org/yedamao/go_sgip.svg?branch=master)](https://travis-ci.org/yedamao/go_sgip)
 
 This is an implementation of SGIP 1.2 for Go
 
