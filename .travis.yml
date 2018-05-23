@@ -6,4 +6,4 @@ before_script:
     - go get golang.org/x/text
 
 script:
-    make unit
+    make
