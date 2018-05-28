@@ -8,7 +8,7 @@ all: unit build
 
 .PHONY: unit
 unit: ## @testing Run the unit tests
-	$(GOTEST) $(shell go list ./sgip/...)
+	$(GOTEST) -race -coverprofile=coverage.txt -covermode=atomic $(shell go list ./sgip/...)
 
 .PHONY: build
 build: clean
