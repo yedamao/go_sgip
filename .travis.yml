@@ -6,4 +6,7 @@ before_script:
     - go get golang.org/x/text
 
 script:
-    make
+    - make
+
+after_success:
+    - bash <(curl -s https://codecov.io/bash)
