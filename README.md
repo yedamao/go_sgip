@@ -1,6 +1,7 @@
 # SGIP 1.2
 [![Build Status](https://travis-ci.org/yedamao/go_sgip.svg?branch=master)](https://travis-ci.org/yedamao/go_sgip)
 [![Go Report Card](https://goreportcard.com/badge/github.com/yedamao/go_sgip)](https://goreportcard.com/report/github.com/yedamao/go_sgip)
+[![codecov](https://codecov.io/gh/yedamao/go_sgip/branch/master/graph/badge.svg)](https://codecov.io/gh/yedamao/go_sgip)
 
 This is an implementation of SGIP 1.2 for Go
 
