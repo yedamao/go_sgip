@@ -10,13 +10,13 @@ import (
 )
 
 func newServerSession(rawConn net.Conn) {
-	s := &serverSession{conn: connp.Conn{Conn: rawConn}}
+	s := &serverSession{connp.Conn{Conn: rawConn}}
 	go s.start()
 }
 
 // 代表sp->运营商的一条连接
 type serverSession struct {
-	conn connp.Conn
+	connp.Conn
 }
 
 func (s *serverSession) BindResp(seq [3]uint32, status protocol.RespStatus) error {
@@ -25,7 +25,7 @@ func (s *serverSession) BindResp(seq [3]uint32, status protocol.RespStatus) erro
 		return err
 	}
 
-	return s.conn.Write(op)
+	return s.Write(op)
 }
 
 func (s *serverSession) UnBindResp(seq [3]uint32, status protocol.RespStatus) error {
@@ -34,7 +34,7 @@ func (s *serverSession) UnBindResp(seq [3]uint32, status protocol.RespStatus) er
 		return err
 	}
 
-	return s.conn.Write(op)
+	return s.Write(op)
 }
 
 func (s *serverSession) SubmitResp(seq [3]uint32, status protocol.RespStatus) error {
@@ -43,16 +43,16 @@ func (s *serverSession) SubmitResp(seq [3]uint32, status protocol.RespStatus) er
 		return err
 	}
 
-	return s.conn.Write(op)
+	return s.Write(op)
 }
 
 func (s *serverSession) start() {
-	defer s.conn.Close()
+	defer s.Close()
 
-	s.conn.SetDeadline(time.Now().Add(1e9))
+	s.SetDeadline(time.Now().Add(1e9))
 
 	for {
-		op, err := s.conn.Read()
+		op, err := s.Read()
 		if err != nil {
 			if opErr, ok := err.(*net.OpError); ok && opErr.Timeout() {
 				continue
