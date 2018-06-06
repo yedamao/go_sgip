@@ -17,7 +17,7 @@ type Transmitter struct {
 	corpId   string
 	sequence uint32
 
-	conn   conn.Conn
+	conn.Conn
 	reader *bufio.Reader
 	writer *bufio.Writer
 }
@@ -67,7 +67,7 @@ func (tx *Transmitter) Connect(host string, port int) error {
 	if err != nil {
 		return err
 	}
-	tx.conn = conn.Conn{Conn: connection}
+	tx.Conn = conn.Conn{Conn: connection}
 
 	return nil
 }
@@ -82,7 +82,7 @@ func (tx *Transmitter) Bind(name, password string) error {
 
 	// Read block
 	var resp protocol.Operation
-	if resp, err = tx.conn.Read(); err != nil {
+	if resp, err = tx.Read(); err != nil {
 		return err
 	}
 
@@ -136,34 +136,4 @@ func (tx *Transmitter) Submit(spNumber string, destId []string, serviceType stri
 
 func (tx *Transmitter) bindCheck() {
 	// TODO
-}
-
-func (tx *Transmitter) Read() (protocol.Operation, error) {
-	op, err := tx.conn.Read()
-	if err != nil {
-		// maybe check err
-		return nil, err
-	}
-
-	switch op.GetHeader().CmdId {
-	case protocol.SGIP_SUBMIT_REP, protocol.SGIP_USERRPT_REP:
-		return op, nil
-
-	case protocol.SGIP_UNBIND:
-		tx.UnbindResp(op.GetHeader().Sequence)
-		tx.Close()
-
-	default:
-		// TODO return error
-	}
-
-	return op, nil
-}
-
-func (tx *Transmitter) Close() {
-	tx.conn.Close()
-}
-
-func (tx *Transmitter) Write(op protocol.Operation) error {
-	return tx.conn.Write(op)
 }
