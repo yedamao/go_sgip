@@ -3,7 +3,6 @@ package sgiptest
 import (
 	"log"
 	"net"
-	"time"
 
 	connp "github.com/yedamao/go_sgip/sgip/conn"
 	"github.com/yedamao/go_sgip/sgip/protocol"
@@ -48,8 +47,6 @@ func (s *serverSession) SubmitResp(seq [3]uint32, status protocol.RespStatus) er
 
 func (s *serverSession) start() {
 	defer s.Close()
-
-	s.SetDeadline(time.Now().Add(1e9))
 
 	for {
 		op, err := s.Read()
