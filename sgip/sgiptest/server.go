@@ -48,6 +48,7 @@ func (s *Server) Run() {
 			}
 			log.Println(err)
 		}
+		log.Println("conn from: ", conn.RemoteAddr())
 
 		newServerSession(conn)
 	}
