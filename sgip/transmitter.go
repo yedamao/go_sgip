@@ -120,7 +120,7 @@ func (tx *Transmitter) Submit(spNumber string, destId []string, serviceType stri
 		tx.NewSeqNum(),
 		spNumber, "000000000000000000000",
 		destId, tx.corpId, serviceType, 1, "0", "0",
-		0, 2, 0, "", "", 2, 0, TP_udhi, msgCoding, 0, msg,
+		0, 2, 0, "", "", 1, 0, TP_udhi, msgCoding, 0, msg,
 	)
 
 	if err != nil {
