@@ -9,7 +9,7 @@ import (
 )
 
 func newServerSession(rawConn net.Conn) {
-	s := &serverSession{connp.Conn{Conn: rawConn}}
+	s := &serverSession{*connp.NewConn(rawConn)}
 	go s.start()
 }
 

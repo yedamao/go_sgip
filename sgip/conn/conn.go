@@ -1,7 +1,9 @@
 package conn
 
 import (
+	"bufio"
 	"encoding/binary"
+	"io"
 	"net"
 
 	"github.com/yedamao/go_sgip/sgip/errors"
@@ -11,11 +13,22 @@ import (
 // Conn is a sgip connection can read/write protocol Operation
 type Conn struct {
 	net.Conn
+	r *bufio.Reader
+	w *bufio.Writer
+}
+
+// new a sgip Conn
+func NewConn(fd net.Conn) *Conn {
+	return &Conn{
+		Conn: fd,
+		r:    bufio.NewReader(fd),
+		w:    bufio.NewWriter(fd),
+	}
 }
 
 func (c *Conn) Read() (protocol.Operation, error) {
 	l := make([]byte, 4)
-	_, err := c.Conn.Read(l)
+	_, err := io.ReadFull(c.r, l)
 	if err != nil {
 		return nil, err
 
@@ -28,13 +41,9 @@ func (c *Conn) Read() (protocol.Operation, error) {
 
 	data := make([]byte, length)
 
-	i, err := c.Conn.Read(data)
+	_, err = io.ReadFull(c.r, data)
 	if err != nil {
 		return nil, err
-	}
-
-	if i != int(length) {
-		return nil, errors.SgipLenErr
 	}
 
 	pkt := append(l, data...)

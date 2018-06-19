@@ -28,7 +28,7 @@ func (tx *OperatorClient) Connect(addr string) error {
 	if err != nil {
 		return err
 	}
-	tx.Conn = conn.Conn{Conn: connection}
+	tx.Conn = *conn.NewConn(connection)
 
 	return nil
 }

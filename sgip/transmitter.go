@@ -67,7 +67,7 @@ func (tx *Transmitter) Connect(host string, port int) error {
 	if err != nil {
 		return err
 	}
-	tx.Conn = conn.Conn{Conn: connection}
+	tx.Conn = *conn.NewConn(connection)
 
 	return nil
 }

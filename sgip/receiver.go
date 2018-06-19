@@ -122,7 +122,7 @@ type Session struct {
 // block
 func startSession(connection net.Conn, recv *Receiver) {
 	s := &Session{
-		conn:     conn.Conn{Conn: connection},
+		conn:     *conn.NewConn(connection),
 		receiver: recv,
 	}
 
