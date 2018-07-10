@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/yedamao/encoding"
 	"github.com/yedamao/go_sgip/sgip"
-	"github.com/yedamao/go_sgip/sgip/encoding"
 	"github.com/yedamao/go_sgip/sgip/protocol"
 )
 
