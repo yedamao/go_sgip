@@ -1,7 +1,6 @@
 # Go parameters
 GOCMD=go
 GOBUILD=$(GOCMD) build
-GOCLEAN=$(GOCMD) clean
 GOTEST=$(GOCMD) test
 
 all: unit build
@@ -26,5 +25,4 @@ build_linux:
 
 .PHONY: clean
 clean:
-	$(GOCLEAN)
 	rm -rf ./bin coverage.txt
