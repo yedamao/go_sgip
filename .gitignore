@@ -1,3 +1,5 @@
 *.swp
 bin
 coverage.txt
+cmd/receiver/receiver
+cmd/transmitter/transmitter

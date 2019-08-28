@@ -27,6 +27,16 @@ func (h *MockHandler) OnBind(login_type uint8, name, password string) protocol.R
 	log.Println("Name: ", name)
 	log.Println("Password: ", password)
 
+	if name != "fakename" || password != "1234" {
+		log.Println("name/password not match")
+		return protocol.STAT_ILLLOGIN
+	}
+
+	if login_type != 2 { // 登录类型 1 sp -> SMG, 2 SMG -> SP
+		log.Println("login type is wrong")
+		return protocol.STAT_ERLGNTYPE
+	}
+
 	return protocol.STAT_OK
 }
 
