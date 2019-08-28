@@ -116,6 +116,7 @@ type Session struct {
 	// SMG -> SP 的连接
 	conn     conn.Conn
 	receiver *Receiver
+	isAuth   bool
 }
 
 // 开启会话
@@ -201,11 +202,23 @@ func (s *Session) start() {
 				return
 			}
 
+			// check is authorized
+			if s.isAuth {
+				s.bindResp(op.GetHeader().Sequence, protocol.STAT_RPTLOGIN)
+				break
+			}
+
 			stat := s.receiver.handler.OnBind(
 				bind.Type, bind.Name.String(), bind.Password.String(),
 			)
 
 			s.bindResp(op.GetHeader().Sequence, stat)
+
+			// check bin result
+			if stat != protocol.STAT_OK {
+				log.Println("Receiver: bind failed")
+				return
+			}
 
 		case protocol.SGIP_DELIVER:
 			deliver, ok := op.(*protocol.Deliver)

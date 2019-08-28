@@ -1,127 +1,111 @@
 package sgip
 
 import (
-	"io"
+	"strconv"
 	"testing"
 
-	"github.com/yedamao/go_sgip/sgip/conn"
+	"github.com/yedamao/go_sgip/sgip/errors"
+	"github.com/yedamao/go_sgip/sgip/protocol"
 	"github.com/yedamao/go_sgip/sgip/sgiptest"
 )
 
-// mock sp client
-// send bind/unbind/deliver/report
-type ReceiverClient struct {
-	conn.Conn
-}
+var (
+	mockReceiver *Receiver
 
-func newReceiver() (*Receiver, error) {
+	host = "localhost"
+	port = 8008
+)
 
-	return NewReceiver(":8008", 2, &sgiptest.MockHandler{}, false)
-}
+// setup running receiver server
+func setup() error {
+	if mockReceiver != nil {
+		return nil
+	}
+	addr := host + ":" + strconv.Itoa(port)
 
-func TestRun(t *testing.T) {
-	receiver, err := newReceiver()
+	receiver, err := NewReceiver(addr, 1, &sgiptest.MockHandler{}, true)
 	if err != nil {
-		t.Error(err)
+		return err
 	}
 
 	go receiver.Run()
 
-	// new client
-	client, err := sgiptest.NewOperatorClient()
-	if err != nil {
-		t.Error(err)
-	}
-
-	err = client.Bind("testname", "testpwd")
-	if err != nil {
-		t.Error(err)
-	}
-
-	err = client.DeliverOnly(
-		"8617600000000", "10690000000", 0, 0, 0,
-		[]byte("test msg..."),
-	)
-	if err != nil {
-		t.Error(err)
-	}
-	err = client.ReportOnly([...]uint32{0, 0, 0}, "8617600000000", 0, 0)
-	if err != nil {
-		t.Error(err)
-	}
-
-	resp, err := client.Read()
-	if err != nil {
-		t.Error(err)
-	}
-	if !resp.Ok() {
-		t.Error("Resp not ok")
-	}
-
-	resp, err = client.Read()
-	if err != nil {
-		t.Error(err)
-	}
-	if !resp.Ok() {
-		t.Error("Resp not ok")
-	}
-
-	err = client.Unbind()
-	if err != nil {
-		t.Error(err)
-	}
-
-	// conn should closed
-	_, err = client.Read()
-	if err != io.EOF {
-		t.Error(err)
-	}
-
-	receiver.Stop()
+	return nil
 }
 
-func BenchmarkRun(b *testing.B) {
+func teardown() {
+	if mockReceiver != nil {
+		mockReceiver.Stop()
+	}
+}
 
-	receiver, err := newReceiver()
-	if err != nil {
-		b.Error(err)
+func TestRunReceiver(t *testing.T) {
+
+	if err := setup(); err != nil {
+		t.Fatal(err)
 	}
 
-	go receiver.Run()
+	t.Run("NewSMGClient with wrong name/password", func(t *testing.T) {
+		// new SMG client
+		_, err := NewSMGClient(host, port, "000", "000", "fakename", "wrong password")
+		if err != errors.SgipBindErr {
+			t.Error("NewSMGClient should bind auth failed")
+		}
+	})
 
-	// new client
-	client, err := sgiptest.NewOperatorClient()
-	if err != nil {
-		b.Error(err)
-	}
+	var client *SMGClient
 
-	for i := 0; i < b.N; i++ {
-		err = client.DeliverOnly(
-			"8617600000000", "10690000000", 0, 0, 0,
-			[]byte("test msg..."),
-		)
+	t.Run("NewSMGClient normal", func(t *testing.T) {
+		// new SMG client
+		c, err := NewSMGClient(host, port, "000", "000", "fakename", "1234")
 		if err != nil {
-			b.Error(err)
+			t.Error("NewSMGClient :", err)
 		}
-		resp, err := client.Read()
+
+		client = c
+	})
+
+	t.Run("Test Deliver", func(t *testing.T) {
+		err := client.Deliver("17600000000", "106900000", 0, 0, protocol.ASCII, []byte("TestDeliver"))
 		if err != nil {
-			b.Error(err)
+			t.Fatal(err)
 		}
-		if !resp.Ok() {
-			b.Error("Resp not ok")
-		}
-	}
 
-	err = client.Unbind()
+		assertResponse(t, client, protocol.SGIP_DELIVER_REP)
+	})
+
+	t.Run("Test Report", func(t *testing.T) {
+		err := client.Report([3]uint32{0, 0, 0}, 0, "17600000000", 0, 0)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		assertResponse(t, client, protocol.SGIP_REPORT_REP)
+	})
+
+	t.Run("Test Unbind", func(t *testing.T) {
+		if err := client.Unbind(); err != nil {
+			t.Fatal(err)
+		}
+
+		assertResponse(t, client, protocol.SGIP_UNBIND_REP)
+	})
+
+	teardown()
+}
+
+func assertResponse(t *testing.T, client *SMGClient, wantCMD uint32) {
+	t.Helper()
+
+	// read one response
+	op, err := client.Read()
 	if err != nil {
-		b.Error(err)
+		t.Fatal(err)
 	}
-
-	// conn should closed
-	_, err = client.Read()
-	if err != io.EOF {
-		b.Error(err)
+	if op.GetHeader().CmdId != wantCMD {
+		t.Errorf("response not expect %s want 0x%0x", op, wantCMD)
 	}
-
-	receiver.Stop()
+	if !op.Ok() {
+		t.Error("reponse not ok")
+	}
 }
