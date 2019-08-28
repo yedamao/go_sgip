@@ -204,7 +204,8 @@ func (s *Session) start() {
 
 			// check is authorized
 			if s.isAuth {
-				// TODO
+				s.bindResp(op.GetHeader().Sequence, protocol.STAT_RPTLOGIN)
+				break
 			}
 
 			stat := s.receiver.handler.OnBind(
