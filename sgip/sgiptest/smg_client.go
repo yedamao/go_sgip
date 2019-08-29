@@ -16,12 +16,8 @@ type SMGClient struct {
 	Client
 }
 
-func NewSMGClient(host string, port int, areaCode, corpId, name, password string) (*SMGClient, error) {
+func NewSMGClient(host string, port int, name, password string) (*SMGClient, error) {
 	sc := &SMGClient{}
-
-	if err := sc.Setup(areaCode, corpId); err != nil {
-		return nil, err
-	}
 
 	if err := sc.Connect(host, port); err != nil {
 		return nil, err

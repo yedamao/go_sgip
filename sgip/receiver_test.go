@@ -47,7 +47,7 @@ func TestRunReceiver(t *testing.T) {
 
 	t.Run("NewSMGClient with wrong name/password", func(t *testing.T) {
 		// new SMG client
-		_, err := sgiptest.NewSMGClient(host, port, "000", "000", "fakename", "wrong password")
+		_, err := sgiptest.NewSMGClient(host, port, "fakename", "wrong password")
 		if err != errors.SgipBindErr {
 			t.Error("NewSMGClient should bind auth failed")
 		}
@@ -57,7 +57,7 @@ func TestRunReceiver(t *testing.T) {
 
 	t.Run("NewSMGClient normal", func(t *testing.T) {
 		// new SMG client
-		c, err := sgiptest.NewSMGClient(host, port, "000", "000", "fakename", "1234")
+		c, err := sgiptest.NewSMGClient(host, port, "fakename", "1234")
 		if err != nil {
 			t.Error("NewSMGClient :", err)
 		}

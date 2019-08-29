@@ -3,3 +3,5 @@ bin
 coverage.txt
 cmd/receiver/receiver
 cmd/transmitter/transmitter
+cmd/mockclient/mockclient
+cmd/mockserver/mockserver
