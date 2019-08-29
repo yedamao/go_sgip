@@ -35,15 +35,6 @@ cd $GOPATH/src/github.com/yedamao/go_sgip && make
 
 ## 命令行工具
 
-### mockserver
-SMG短信网关模拟器
-
-```
-Usage of ./bin/mockserver:
-  -addr string
-        监听地址 (default ":8801")
-```
-
 ### transmitter
 使用短链接提交短信
 
@@ -71,6 +62,15 @@ Usage of ./bin/transmitter:
         SP的接入号码
 ```
 
+### mockserver
+SMG短信网关模拟器
+
+```
+Usage of ./bin/mockserver:
+  -addr string
+        监听地址 (default ":8801")
+```
+
 ### receiver
 负责接收运营商上行短信及状态消息
 
@@ -82,4 +82,25 @@ Usage of ./bin/receiver:
         worker 数量 (default 5)
 ```
 
+### mockclient
+模拟SMG向SP提交上行消息
 
+```
+Usage of ./bin/mockclient:
+  -host string
+        SP receiver host (default "localhost")
+  -msg string
+        短信内容
+  -name string
+        Login Name
+  -passwd string
+        Login Password
+  -port int
+        SP receiver port (default 8001)
+  -sleep int
+        sleep some seconds after receive Deliver response (default 1)
+  -sp-number string
+        SP的接入号码
+  -user-number string
+        发送短消息的用户手机号，手机号码前加“86”国别标志
+```
