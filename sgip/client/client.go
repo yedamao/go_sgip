@@ -1,4 +1,4 @@
-package sgip
+package client
 
 import (
 	"net"
@@ -10,26 +10,26 @@ import (
 	"github.com/yedamao/go_sgip/sgip/protocol"
 )
 
-// commonClient
-type commonClient struct {
+// Client Common Client
+type Client struct {
 	conn.Conn
 
-	Mu       sync.Mutex
+	mu       sync.Mutex
 	nodeId   uint32
-	corpId   string
+	CorpId   string
 	sequence uint32
 }
 
-func (c *commonClient) NewSeqNum() [3]uint32 {
-	defer c.Mu.Unlock()
+func (c *Client) NewSeqNum() [3]uint32 {
+	defer c.mu.Unlock()
 
-	c.Mu.Lock()
+	c.mu.Lock()
 	c.sequence++
 
 	return [3]uint32{c.nodeId, protocol.TimeStamp(), c.sequence}
 }
 
-func (c *commonClient) setup(areaCode, corpId string) error {
+func (c *Client) Setup(areaCode, corpId string) error {
 
 	nodeId, err := protocol.NodeId(areaCode, corpId)
 	if err != nil {
@@ -37,12 +37,12 @@ func (c *commonClient) setup(areaCode, corpId string) error {
 	}
 	c.nodeId = nodeId
 
-	c.corpId = corpId
+	c.CorpId = corpId
 
 	return nil
 }
 
-func (c *commonClient) connect(host string, port int) error {
+func (c *Client) Connect(host string, port int) error {
 	connection, err := net.Dial("tcp", host+":"+strconv.Itoa(port))
 	if err != nil {
 		return err
@@ -52,7 +52,7 @@ func (c *commonClient) connect(host string, port int) error {
 	return nil
 }
 
-func (c *commonClient) bind(name, password string, login_type uint8) error {
+func (c *Client) Bind(name, password string, login_type uint8) error {
 	op, err := protocol.NewBind(c.NewSeqNum(), login_type, name, password)
 	if err = c.Write(op); err != nil {
 		return err
@@ -77,7 +77,7 @@ func (c *commonClient) bind(name, password string, login_type uint8) error {
 	return nil
 }
 
-func (c *commonClient) Unbind() error {
+func (c *Client) Unbind() error {
 	op, err := protocol.NewUnbind(c.NewSeqNum())
 	if err != nil {
 		return err
@@ -86,7 +86,7 @@ func (c *commonClient) Unbind() error {
 	return c.Write(op)
 }
 
-func (c *commonClient) UnbindResp(sequence [3]uint32) error {
+func (c *Client) UnbindResp(sequence [3]uint32) error {
 	op, err := protocol.NewUnbindResp(sequence)
 	if err != nil {
 		return err
