@@ -1,6 +1,7 @@
-package sgip
+package sgiptest
 
 import (
+	. "github.com/yedamao/go_sgip/sgip/client"
 	"github.com/yedamao/go_sgip/sgip/protocol"
 )
 
@@ -12,17 +13,17 @@ import (
 // Deliver
 // Report
 type SMGClient struct {
-	commonClient
+	Client
 }
 
 func NewSMGClient(host string, port int, areaCode, corpId, name, password string) (*SMGClient, error) {
 	sc := &SMGClient{}
 
-	if err := sc.setup(areaCode, corpId); err != nil {
+	if err := sc.Setup(areaCode, corpId); err != nil {
 		return nil, err
 	}
 
-	if err := sc.connect(host, port); err != nil {
+	if err := sc.Connect(host, port); err != nil {
 		return nil, err
 	}
 
@@ -35,7 +36,7 @@ func NewSMGClient(host string, port int, areaCode, corpId, name, password string
 
 func (sc *SMGClient) Bind(name, password string) error {
 	// smg -> sp server
-	return sc.bind(name, password, 2)
+	return sc.Client.Bind(name, password, 2)
 }
 
 func (sc *SMGClient) Deliver(userNumber string, spNumber string, TP_pid int, TP_udhi int, msgCoding int, msg []byte) error {

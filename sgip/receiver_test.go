@@ -47,17 +47,17 @@ func TestRunReceiver(t *testing.T) {
 
 	t.Run("NewSMGClient with wrong name/password", func(t *testing.T) {
 		// new SMG client
-		_, err := NewSMGClient(host, port, "000", "000", "fakename", "wrong password")
+		_, err := sgiptest.NewSMGClient(host, port, "000", "000", "fakename", "wrong password")
 		if err != errors.SgipBindErr {
 			t.Error("NewSMGClient should bind auth failed")
 		}
 	})
 
-	var client *SMGClient
+	var client *sgiptest.SMGClient
 
 	t.Run("NewSMGClient normal", func(t *testing.T) {
 		// new SMG client
-		c, err := NewSMGClient(host, port, "000", "000", "fakename", "1234")
+		c, err := sgiptest.NewSMGClient(host, port, "000", "000", "fakename", "1234")
 		if err != nil {
 			t.Error("NewSMGClient :", err)
 		}
@@ -94,7 +94,7 @@ func TestRunReceiver(t *testing.T) {
 	teardown()
 }
 
-func assertResponse(t *testing.T, client *SMGClient, wantCMD uint32) {
+func assertResponse(t *testing.T, client *sgiptest.SMGClient, wantCMD uint32) {
 	t.Helper()
 
 	// read one response
