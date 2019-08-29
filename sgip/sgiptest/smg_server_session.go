@@ -1,9 +1,11 @@
 package sgiptest
 
 import (
+	"bytes"
 	"log"
 	"net"
 
+	"github.com/yedamao/encoding"
 	connp "github.com/yedamao/go_sgip/sgip/conn"
 	"github.com/yedamao/go_sgip/sgip/protocol"
 )
@@ -63,11 +65,15 @@ func (s *serverSession) start() {
 
 		switch op.GetHeader().CmdId {
 		case protocol.SGIP_BIND:
-			// TODO check bind
+			// check bind
+			stat := s.handleBind(op.(*protocol.Bind))
 			s.BindResp(op.GetHeader().Sequence, protocol.STAT_OK)
+			if stat != protocol.STAT_OK {
+				return
+			}
 
 		case protocol.SGIP_SUBMIT:
-			// TODO check submit
+			// check submit
 			s.SubmitResp(op.GetHeader().Sequence, protocol.STAT_OK)
 
 		case protocol.SGIP_UNBIND:
@@ -79,4 +85,53 @@ func (s *serverSession) start() {
 			return
 		}
 	}
+}
+
+func (s *serverSession) handleBind(op *protocol.Bind) protocol.RespStatus {
+	log.Println("---- handle bind ----")
+	log.Println("Type: ", op.Type)
+	log.Println("Name: ", op.Name)
+	log.Println("Password: ", op.Password)
+
+	if op.Name.String() != "fakename" || op.Password.String() != "1234" {
+		log.Println("name/password not match")
+		return protocol.STAT_ILLLOGIN
+	}
+
+	if op.Type != 1 { // 登录类型 1 sp -> SMG, 2 SMG -> SP
+		log.Println("login type is wrong")
+		return protocol.STAT_ERLGNTYPE
+	}
+
+	return protocol.STAT_OK
+}
+
+func (s *serverSession) handleSubmit(op *protocol.Submit) {
+
+	log.Println("SPNumber: ", op.SPNumber)
+	log.Println("UserNumber: ", op.UserNumber)
+	log.Println("TP_pid: ", op.TP_pid)
+	log.Println("TP_udhi: ", op.TP_udhi)
+	log.Println("MessageCoding: ", op.MessageCoding)
+
+	messageContent := op.MessageContent.Byte()
+	var msg []byte
+	switch op.MessageCoding {
+	case protocol.ASCII:
+		msg = messageContent
+	case protocol.GBK:
+		// convert GB to UTF-8
+		msg = encoding.GB18030(messageContent).Decode()
+	case protocol.UCS2:
+		// 0x05 0x00 0x03  长短信
+		if bytes.Equal(messageContent[:3], []byte{0x05, 0x00, 0x03}) {
+			// convert UCS2 to UTF-8 砍掉六字节长短信头
+			msg = encoding.UCS2(messageContent[6:]).Decode()
+		} else {
+			// convert UCS2 to UTF-8
+			msg = encoding.UCS2(messageContent).Decode()
+		}
+	}
+
+	log.Println("MessageContent: ", string(msg))
 }
