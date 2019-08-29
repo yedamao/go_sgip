@@ -74,6 +74,7 @@ func (s *serverSession) start() {
 
 		case protocol.SGIP_SUBMIT:
 			// check submit
+			s.handleSubmit(op.(*protocol.Submit))
 			s.SubmitResp(op.GetHeader().Sequence, protocol.STAT_OK)
 
 		case protocol.SGIP_UNBIND:
