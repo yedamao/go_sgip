@@ -70,7 +70,6 @@ func (s *Session) Close() {
 		log.Println("Session: Closing")
 		return
 	}
-	log.Println("Session: already closed")
 }
 
 // recvWorker read Operation on session connection
