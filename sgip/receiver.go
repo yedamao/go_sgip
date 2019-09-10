@@ -5,9 +5,7 @@ import (
 	"log"
 	"net"
 	"sync"
-	"time"
 
-	"github.com/yedamao/go_sgip/sgip/conn"
 	"github.com/yedamao/go_sgip/sgip/protocol"
 )
 
@@ -81,8 +79,9 @@ func (r *Receiver) worker(id int) {
 
 		log.Println("worker ", id, ": Accept ", conn)
 
+		session := NewSession(conn, r.handler, r.done)
 		// block
-		startSession(conn, r)
+		session.Run()
 	}
 }
 
@@ -109,158 +108,4 @@ func (r *Receiver) Stop() {
 	close(r.done)
 	r.listener.Close()
 	log.Println("Server stopped...")
-}
-
-// 代表与运营商的一条会话连接
-type Session struct {
-	// SMG -> SP 的连接
-	conn     conn.Conn
-	receiver *Receiver
-	isAuth   bool
-}
-
-// 开启会话
-// block
-func startSession(connection net.Conn, recv *Receiver) {
-	s := &Session{
-		conn:     *conn.NewConn(connection),
-		receiver: recv,
-	}
-
-	s.start()
-}
-
-func (s *Session) bindResp(seq [3]uint32, status protocol.RespStatus) error {
-	op, err := protocol.NewResponse(protocol.SGIP_BIND_REP, seq, status)
-	if err != nil {
-		return err
-	}
-
-	return s.conn.Write(op)
-}
-
-func (s *Session) unbindResp(seq [3]uint32) error {
-	op, err := protocol.NewUnbindResp(seq)
-	if err != nil {
-		return err
-	}
-
-	return s.conn.Write(op)
-}
-
-func (s *Session) deliverResp(seq [3]uint32, status protocol.RespStatus) error {
-	op, err := protocol.NewResponse(protocol.SGIP_DELIVER_REP, seq, status)
-	if err != nil {
-		return err
-	}
-
-	return s.conn.Write(op)
-}
-
-func (s *Session) reportResp(seq [3]uint32, status protocol.RespStatus) error {
-	op, err := protocol.NewResponse(protocol.SGIP_REPORT_REP, seq, status)
-	if err != nil {
-		return err
-	}
-
-	return s.conn.Write(op)
-}
-
-func (s *Session) start() {
-	// 关闭会话
-	defer s.close()
-
-	for {
-
-		select {
-		case <-s.receiver.done:
-			log.Println("Session: Server closed")
-			return
-		default:
-		}
-
-		s.conn.SetDeadline(time.Now().Add(1e9))
-		op, err := s.conn.Read()
-		if err != nil {
-			if opErr, ok := err.(*net.OpError); ok && opErr.Timeout() {
-				continue
-			}
-
-			log.Println("Receiver: read error exit. ", err)
-			return
-		}
-
-		if s.receiver.debug { // if debug mode, print op pkg
-			log.Println(op)
-		}
-
-		switch op.GetHeader().CmdId {
-		case protocol.SGIP_BIND:
-			bind, ok := op.(*protocol.Bind)
-			if !ok {
-				log.Println("Receiver: bind type assert error")
-				return
-			}
-
-			// check is authorized
-			if s.isAuth {
-				s.bindResp(op.GetHeader().Sequence, protocol.STAT_RPTLOGIN)
-				break
-			}
-
-			stat := s.receiver.handler.OnBind(
-				bind.Type, bind.Name.String(), bind.Password.String(),
-			)
-
-			s.bindResp(op.GetHeader().Sequence, stat)
-
-			// check bin result
-			if stat != protocol.STAT_OK {
-				log.Println("Receiver: bind failed")
-				return
-			}
-
-		case protocol.SGIP_DELIVER:
-			deliver, ok := op.(*protocol.Deliver)
-			if !ok {
-				log.Println("Receiver: deliver type assert error")
-				return
-			}
-
-			stat := s.receiver.handler.OnDeliver(
-				deliver.UserNumber.String(), deliver.SPNumber.String(),
-				deliver.TP_pid, deliver.TP_udhi, deliver.MessageCoding,
-				deliver.MessageContent.Byte(),
-			)
-
-			s.deliverResp(op.GetHeader().Sequence, stat)
-
-		case protocol.SGIP_REPORT:
-			report, ok := op.(*protocol.Report)
-			if !ok {
-				log.Println("Receiver: report type assert error")
-				return
-			}
-
-			stat := s.receiver.handler.OnReport(
-				report.SubmitSequence, report.ReportType, report.UserNumber.String(),
-				report.State, report.ErrorCode,
-			)
-
-			s.reportResp(op.GetHeader().Sequence, stat)
-
-		case protocol.SGIP_UNBIND:
-			s.unbindResp(op.GetHeader().Sequence)
-			return
-
-		default:
-			log.Printf("Receiver: Unknow Operation CmdId: 0x%x\n", op.GetHeader().CmdId)
-			return
-		}
-	}
-}
-
-// 关闭会话
-func (s *Session) close() {
-	s.conn.Close()
 }
