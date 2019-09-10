@@ -79,7 +79,7 @@ func (r *Receiver) worker(id int) {
 
 		log.Println("worker ", id, ": Accept ", conn)
 
-		session := NewSession(conn, r)
+		session := NewSession(conn, r.handler, r.done)
 		// block
 		session.Run()
 	}

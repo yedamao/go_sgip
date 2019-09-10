@@ -12,24 +12,25 @@ import (
 
 // Session bewteen SP and Operator
 type Session struct {
-	receiver *Receiver
 	// SMG -> SP
-	conn    conn.Conn
-	pipe    chan protocol.Operation
-	isAuth  bool
-	isClose uint64
-	done    chan struct{}
+	conn       conn.Conn
+	handler    Handler
+	pipe       chan protocol.Operation
+	isAuth     bool
+	isClose    uint64
+	done       chan struct{}
+	serverDone chan struct{}
 }
 
-func NewSession(connection net.Conn, recv *Receiver) *Session {
-	s := &Session{
-		conn:     *conn.NewConn(connection),
-		receiver: recv,
-		pipe:     make(chan protocol.Operation),
-		done:     make(chan struct{}),
-	}
+func NewSession(connection net.Conn, handler Handler, done chan struct{}) *Session {
 
-	return s
+	return &Session{
+		handler:    handler,
+		conn:       *conn.NewConn(connection),
+		pipe:       make(chan protocol.Operation),
+		done:       make(chan struct{}),
+		serverDone: done,
+	}
 }
 
 func (s *Session) Run() {
@@ -55,7 +56,7 @@ func (s *Session) Run() {
 			log.Println("Session: To be close")
 			return
 
-		case <-s.receiver.done:
+		case <-s.serverDone:
 			log.Println("Session: Receiver server closed")
 			return
 		}
@@ -79,7 +80,7 @@ func (s *Session) recvWorker() {
 	for {
 
 		select {
-		case <-s.receiver.done:
+		case <-s.serverDone:
 			log.Println("Session.recvWorker: Receiver server closed")
 			return
 		case <-s.done:
@@ -108,10 +109,6 @@ func (s *Session) recvWorker() {
 // process Operation
 func (s *Session) process(op protocol.Operation) {
 
-	if s.receiver.debug { // if debug mode, print op pkg
-		log.Println(op)
-	}
-
 	switch op.GetHeader().CmdId {
 	case protocol.SGIP_BIND:
 		bind, ok := op.(*protocol.Bind)
@@ -127,7 +124,7 @@ func (s *Session) process(op protocol.Operation) {
 			break
 		}
 
-		stat := s.receiver.handler.OnBind(
+		stat := s.handler.OnBind(
 			bind.Type, bind.Name.String(), bind.Password.String(),
 		)
 
@@ -148,7 +145,7 @@ func (s *Session) process(op protocol.Operation) {
 			return
 		}
 
-		stat := s.receiver.handler.OnDeliver(
+		stat := s.handler.OnDeliver(
 			deliver.UserNumber.String(), deliver.SPNumber.String(),
 			deliver.TP_pid, deliver.TP_udhi, deliver.MessageCoding,
 			deliver.MessageContent.Byte(),
@@ -164,7 +161,7 @@ func (s *Session) process(op protocol.Operation) {
 			return
 		}
 
-		stat := s.receiver.handler.OnReport(
+		stat := s.handler.OnReport(
 			report.SubmitSequence, report.ReportType, report.UserNumber.String(),
 			report.State, report.ErrorCode,
 		)
