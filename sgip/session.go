@@ -20,9 +20,15 @@ type Session struct {
 	isClose    uint64
 	done       chan struct{}
 	serverDone chan struct{}
+
+	// debug flag
+	debug bool
 }
 
-func NewSession(connection net.Conn, handler Handler, done chan struct{}) *Session {
+func NewSession(
+	connection net.Conn, handler Handler,
+	done chan struct{}, debug bool,
+) *Session {
 
 	return &Session{
 		handler:    handler,
@@ -30,6 +36,7 @@ func NewSession(connection net.Conn, handler Handler, done chan struct{}) *Sessi
 		pipe:       make(chan protocol.Operation),
 		done:       make(chan struct{}),
 		serverDone: done,
+		debug:      debug,
 	}
 }
 
@@ -100,6 +107,10 @@ func (s *Session) recvWorker() {
 			// Close session
 			s.Close()
 			return
+		}
+
+		if s.debug {
+			log.Println(op)
 		}
 
 		s.pipe <- op
