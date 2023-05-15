@@ -1,5 +1,5 @@
 # SGIP 1.2
-[![Build Status](https://travis-ci.org/yedamao/go_sgip.svg?branch=master)](https://travis-ci.org/yedamao/go_sgip)
+[![Build Status](https://github.com/yedamao/go_sgip/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/yedamao/go_sgip/actions/workflows/build.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/yedamao/go_sgip)](https://goreportcard.com/report/github.com/yedamao/go_sgip)
 [![codecov](https://codecov.io/gh/yedamao/go_sgip/branch/master/graph/badge.svg)](https://codecov.io/gh/yedamao/go_sgip)
 
